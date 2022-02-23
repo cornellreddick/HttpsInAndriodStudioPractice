@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
 import java.io.IOException;
 
@@ -19,6 +20,7 @@ import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
     final String TAG = "Demo";
+    TextView textViewCount;
 
     private final OkHttpClient client = new OkHttpClient();
 
@@ -27,8 +29,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Log.d(TAG, "onCreate: Main Thread Id" + Thread.currentThread().getId());
 
-        createContact("Maurice Jackson","mj@gmail.com","123-123-4455", "CELL");
+        textViewCount = findViewById(R.id.textViewCount);
+
+      //  createContact("Maurice Jackson","mj@gmail.com","123-123-4455", "CELL");
+        getContact();
 //        String name = "rh";
 //        String type = "HOME";
 //// First approach to makeing a Get request.
@@ -102,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                Log.d(TAG, "onResponse: Thread Id" + Thread.currentThread().getId());
                 if (response.isSuccessful()){
                     ResponseBody responseBody = response.body();
                     String body = responseBody.string();
@@ -116,6 +123,40 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+    void getContact(){
+        Log.d(TAG, "getContact: start");
+        Request request = new Request.Builder()
+                .url("https://www.theappsdr.com/contacts")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                Log.d(TAG, "onResponse: Thread Id" + Thread.currentThread().getId());
+                if (response.isSuccessful()){
+                    ResponseBody responseBody = response.body();
+                    String body = responseBody.string();
+
+                    String [] item = body.split("\n");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            textViewCount.setText(item.length + " Contacts");
+                        }
+                    });
+
+                    Log.d(TAG, "onResponse: " + body);
+                }
+            }
+        });
+
+        Log.d(TAG, "getContact: end");
     }
 
 }
